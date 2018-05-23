@@ -24,7 +24,8 @@
    :formats ["bold" "italic" "underline" "list" "indent" "bullet" "link"]})
 
 (defn DEFAULT_SERIALIZER [delta]
-  (js->clj (.-ops delta) :keywordize-keys true))
+  (when delta
+    (js->clj (.-ops delta) :keywordize-keys true)))
 
 (defn quill [f]
   (let [element (r/atom nil)
