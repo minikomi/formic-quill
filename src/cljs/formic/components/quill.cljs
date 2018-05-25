@@ -4,7 +4,8 @@
    [reagent.core :as r]
    [cljsjs.quill]
    [formic.field :as field]
-   [clojure.string :as s]))
+   [clojure.string :as s]
+   [goog.object :as gobj]))
 
 (defn replace-contents [editor value]
   (let [sel (.getSelection editor)]
@@ -24,8 +25,9 @@
    :formats ["bold" "italic" "underline" "list" "indent" "bullet" "link"]})
 
 (defn DEFAULT_SERIALIZER [delta]
-  (when delta
-    (js->clj (.-ops delta) :keywordize-keys true)))
+  (when (and delta
+             (not (string? delta))) ;; can be string on initialization
+    (js->clj (gobj/get delta "ops") :keywordize-keys true)))
 
 (defn quill [f]
   (let [element (r/atom nil)
@@ -47,6 +49,7 @@
           ;; ensure touched when blurred
           (set! (.. @element -firstChild -onblur)
                 (fn [ev]
+                  (println "a")
                   (reset! touched true)))
           (if (string? @current-value )
             (.setText ed @current-value)
