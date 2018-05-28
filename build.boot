@@ -5,8 +5,13 @@
           :dependencies   '[[org.clojure/clojure "1.9.0"]
                             [org.clojure/clojurescript "1.10.238"]
                             [cljsjs/quill "1.2.5-4"]
+                            [adzerk/bootlaces "0.1.13"]
                             [reagent "0.8.0"]
                             [funcool/struct "1.2.0"]])
+
+(require '[adzerk.bootlaces :refer :all])
+
+(bootlaces! version)
 
 (task-options!
  pom {:project     project
