@@ -69,3 +69,9 @@
           [:div {:ref (fn [el] (reset! element el))}]]
          (when @err
            [:h3.error err])])})))
+
+(field/register-component
+ :formic-quill
+ {:component quill
+  :parser clj->js
+  :serializer DEFAULT_SERIALIZER})
