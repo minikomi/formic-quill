@@ -32,7 +32,8 @@
 (defn quill [f]
   (let [element (r/atom nil)
         editor (r/atom nil)
-        {:keys [modules formats validation theme touched current-value err]} f]
+        {:keys [validationtouched current-value err options]} f
+        {:keys [modules formats theme]} options]
     (r/create-class
      {:component-did-mount
       (fn [_]
