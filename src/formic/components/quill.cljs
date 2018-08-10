@@ -2,6 +2,7 @@
   (:require
    [formic.util :as u]
    [reagent.core :as r]
+   [reagent.impl.component :refer [extract-props]]
    [cljsjs.quill]
    [formic.field :as field]
    [clojure.string :as s]
@@ -29,45 +30,61 @@
              (not (string? delta))) ;; can be string on initialization
     (js->clj (gobj/get delta "ops") :keywordize-keys true)))
 
-(defn quill [f]
-  (let [element (r/atom nil)
+(defn quill [{:keys [id touched value err options]}]
+  (let [{:keys [modules formats theme]} options
+        element (r/atom nil)
         editor (r/atom nil)
-        {:keys [validationtouched current-value err options]} f
-        {:keys [modules formats theme]} options]
+        should-update (atom false)]
     (r/create-class
-     {:component-did-mount
+     {:display-name (str "formic-quill-" (name id))
+      :component-did-mount
       (fn [_]
         (let [options (clj->js (merge-with #(or % %2)
-                                default-options
-                                {:modules modules
-                                 :theme theme
-                                 :formats formats}))
-              ed (js/Quill. @element options)]
+                                           default-options
+                                           {:modules modules
+                                            :theme theme
+                                            :formats formats}))
+              ed (js/Quill. @element options)
+              reset-ed-fn 
+              (fn []
+                (if (string? @value)
+                  (.setText ed @value)
+                  (.setContents ed @value)))]
           ;; update value on change
           (.on ed "text-change"
                (fn [delta olddelta source]
-                 (reset! current-value (.getContents ed))))
+                 (when (= source "user")
+                   (reset! value (.getContents ed))
+                   (reset! should-update false))))
           ;; ensure touched when blurred
           (set! (.. @element -firstChild -onblur)
                 (fn [ev]
-                  (println "a")
                   (reset! touched true)))
-          (if (string? @current-value )
-            (.setText ed @current-value)
-            (.setContents ed @current-value))
+          (reset-ed-fn)
           (reset! editor ed)))
+      :component-did-update
+      (fn [_ props]
+        (when (and  @editor
+                    @should-update)
+          (let [cv @(:value (extract-props props))]
+            (if (string? cv)
+              (.setText @editor cv)
+              (.setContents @editor (gobj/get cv "ops")))))
+        (reset! should-update true))
       :component-will-unmount
       (fn [_]
         (let [ed @editor]
           (.off ed "editor-change")
           (reset! editor nil)))
       :reagent-render
-      (fn [f]
+      (fn [{:keys [id touched value err options]}]
         [:div.formic-quill {:class (when @err "error")}
          [:span.formic-input-title
-          (u/format-kw (:id f))]
+          (u/format-kw id)]
          [:div.formic-quill-editor-wrapper
-          [:div {:ref (fn [el] (reset! element el))}]]
+          [:div 
+           {:ref (fn [el] (reset! element el))}]]
+         [:input {:type "hidden" :value (prn-str (DEFAULT_SERIALIZER @value))}]
          (when @err
            [:h3.error err])])})))
 
