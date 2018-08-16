@@ -61,6 +61,7 @@
                 (fn [ev]
                   (reset! touched true)))
           (reset-ed-fn)
+          (reset! value (.getContents ed))
           (reset! editor ed)))
       :component-did-update
       (fn [_ props]
