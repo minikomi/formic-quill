@@ -25,10 +25,15 @@
               "clean"]}
    :formats ["bold" "italic" "underline" "list" "indent" "bullet" "link"]})
 
-(defn DEFAULT_SERIALIZER [delta]
-  (when (and delta
-             (not (string? delta))) ;; can be string on initialization
-    (js->clj (gobj/get delta "ops") :keywordize-keys true)))
+(def validate-required
+  {:message "This field is required"
+   :validate (fn [m]
+               (when (and (map? m) (:txt m))
+                 (not (s/blank? (:txt m)))))})
+
+(defn DEFAULT_SERIALIZER [v]
+  (when (not (string? v)) ;; can be string on initialization
+    (js->clj (gobj/get (:delta v) "ops") :keywordize-keys true)))
 
 (defn quill [{:keys [id touched value err options]}]
   (let [{:keys [modules formats theme]} options
@@ -54,14 +59,17 @@
           (.on ed "text-change"
                (fn [delta olddelta source]
                  (when (= source "user")
-                   (reset! value (.getContents ed))
+                   (swap! value assoc
+                          :delta (.getContents ed)
+                          :txt (.getText ed))
                    (reset! should-update false))))
           ;; ensure touched when blurred
           (set! (.. @element -firstChild -onblur)
                 (fn [ev]
                   (reset! touched true)))
           (reset-ed-fn)
-          (reset! value (.getContents ed))
+          (reset! value {:text (.getText ed)
+                         :delta (.getContents ed)})
           (reset! editor ed)))
       :component-did-update
       (fn [_ props]
@@ -87,7 +95,7 @@
            {:ref (fn [el] (reset! element el))}]]
          [:input {:type "hidden" :value (prn-str (DEFAULT_SERIALIZER @value))}]
          (when @err
-           [:h3.error err])])})))
+           [:h3.error @err])])})))
 
 (field/register-component
  :formic-quill
