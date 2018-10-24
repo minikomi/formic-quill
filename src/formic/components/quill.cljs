@@ -25,17 +25,11 @@
               "clean"]}
    :formats ["bold" "italic" "underline" "list" "indent" "bullet" "link"]})
 
-(def validate-required
-  {:message "This field is required"
-   :validate (fn [m]
-               (when (and (map? m) (:txt m))
-                 (not (s/blank? (:txt m)))))})
-
 (defn DEFAULT_SERIALIZER [v]
   (when (not (string? v)) ;; can be string on initialization
     (js->clj (gobj/get (:delta v) "ops") :keywordize-keys true)))
 
-(defn quill [{:keys [id touched value err options]}]
+(defn quill [{:keys [id touched value err classes options]}]
   (let [{:keys [modules formats theme]} options
         element (r/atom nil)
         editor (r/atom nil)
@@ -66,19 +60,21 @@
           ;; ensure touched when blurred
           (set! (.. @element -firstChild -onblur)
                 (fn [ev]
-                  (reset! touched true)))
+                  (reset! touched true)
+                  (.setContents ed (:delta @value))))
           (reset-ed-fn)
           (reset! value {:text (.getText ed)
                          :delta (.getContents ed)})
           (reset! editor ed)))
       :component-did-update
       (fn [_ props]
+        (js/console.log "props" (prn-str props))
         (when (and  @editor
                     @should-update)
           (let [cv @(:value (extract-props props))]
             (if (string? cv)
               (.setText @editor cv)
-              (.setContents @editor (gobj/get cv "ops")))))
+              (.setContents @editor (gobj/get (:delta cv) "ops")))))
         (reset! should-update true))
       :component-will-unmount
       (fn [_]
@@ -88,7 +84,8 @@
       :reagent-render
       (fn [{:keys [id touched value err options]}]
         [:div.formic-quill {:class (when @err "error")}
-         [:span.formic-input-title
+         [:h5.formic-input-title
+          {:class (:title classes)}
           (u/format-kw id)]
          [:div.formic-quill-editor-wrapper
           [:div 
