@@ -4,7 +4,7 @@
 (set-env! :resource-paths #{"src"}
           :dependencies   '[[org.clojure/clojure "1.9.0"]
                             [org.clojure/clojurescript "1.10.238"]
-                            [cljsjs/quill "1.2.5-4"]
+                            [cljsjs/quill "1.3.5-0"]
                             [adzerk/bootlaces "0.1.13"]
                             [reagent "0.8.0"]
                             [funcool/struct "1.2.0"]])

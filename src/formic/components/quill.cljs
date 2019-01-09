@@ -60,21 +60,19 @@
           ;; ensure touched when blurred
           (set! (.. @element -firstChild -onblur)
                 (fn [ev]
-                  (reset! touched true)
-                  (.setContents ed (:delta @value))))
+                  (reset! touched true)))
           (reset-ed-fn)
-          (reset! value {:text (.getText ed)
+          (reset! value {:txt (.getText ed)
                          :delta (.getContents ed)})
           (reset! editor ed)))
       :component-did-update
-      (fn [_ props]
-        (js/console.log "props" (prn-str props))
-        (when (and  @editor
-                    @should-update)
-          (let [cv @(:value (extract-props props))]
+      (fn [this props]
+        (when (and @editor
+                   @should-update)
+          (let [cv @(:value (r/props this))]
             (if (string? cv)
               (.setText @editor cv)
-              (.setContents @editor (gobj/get (:delta cv) "ops")))))
+              (.setContents @editor (:delta cv)))))
         (reset! should-update true))
       :component-will-unmount
       (fn [_]
