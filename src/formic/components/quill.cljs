@@ -33,7 +33,8 @@
   (let [{:keys [modules formats theme]} options
         element (r/atom nil)
         editor (r/atom nil)
-        should-update (atom false)]
+        should-update (atom false)
+        current-handler (atom nil)]
     (r/create-class
      {:display-name (str "formic-quill-" (name id))
       :component-did-mount
@@ -49,14 +50,15 @@
                 (if (string? @value)
                   (.setText ed @value)
                   (.setContents ed @value)))]
-          ;; update value on change
-          (.on ed "text-change"
-               (fn [delta olddelta source]
-                 (when (= source "user")
-                   (swap! value assoc
-                          :delta (.getContents ed)
-                          :txt (.getText ed))
-                   (reset! should-update false))))
+          (reset! current-handler
+                  (fn [delta olddelta source]
+                    (when (= source "user")
+                      (swap! value
+                             assoc
+                             :delta (.getContents @editor)
+                             :txt (.getText @editor))
+                      (reset! should-update false))))
+          (.on ed "text-change" @current-handler)
           ;; ensure touched when blurred
           (set! (.. @element -firstChild -onblur)
                 (fn [ev]
@@ -69,6 +71,16 @@
       (fn [this props]
         (when (and @editor
                    @should-update)
+          (.off @editor "text-change" @current-handler)
+          (reset! current-handler
+                  (fn [delta olddelta source]
+                    (when (= source "user")
+                      (swap! (:value (r/props this))
+                             assoc
+                             :delta (.getContents @editor)
+                             :txt (.getText @editor))
+                      (reset! should-update false))))
+          (.on @editor "text-change" @current-handler)
           (let [cv @(:value (r/props this))]
             (if (string? cv)
               (.setText @editor cv)
