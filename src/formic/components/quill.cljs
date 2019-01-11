@@ -29,6 +29,11 @@
   (when (not (string? v)) ;; can be string on initialization
     (js->clj (gobj/get (:delta v) "ops") :keywordize-keys true)))
 
+(def quill-not-blank
+  {:message "Required"
+   :optional true
+   :validate (fn [v] (not-empty (:txt v)))})
+
 (defn quill [{:keys [id touched value err classes options]}]
   (let [{:keys [modules formats theme]} options
         element (r/atom nil)
