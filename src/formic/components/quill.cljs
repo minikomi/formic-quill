@@ -29,7 +29,7 @@
   (when (not (string? v)) ;; can be string on initialization
     (js->clj (gobj/get (:delta v) "ops") :keywordize-keys true)))
 
-(def quill-not-blank
+(def not-blank
   {:message "Required"
    :optional true
    :validate (fn [v] (not-empty (:txt v)))})
