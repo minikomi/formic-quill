@@ -115,5 +115,5 @@
 (field/register-component
  :formic-quill
  {:component quill
-  :parser (fn [v] (clj->js v))
+  :parser (fn [v] {:delta (clj->js {:ops v})})
   :serializer DEFAULT_SERIALIZER})
