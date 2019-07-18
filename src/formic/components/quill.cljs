@@ -36,9 +36,8 @@
    :optional true
    :validate (fn [v]
                (if (:txt v)
-                (not (str/blank? (:txt v)))
-                (not-empty v)))})
-
+                 (not (str/blank? (:txt v)))
+                 (not-empty v)))})
 
 (defn quill [{:keys [id touched value err classes options title]}]
   (let [{:keys [modules formats theme]} options
@@ -56,7 +55,7 @@
                                             :theme theme
                                             :formats formats}))
               ed (js/Quill. @element options)
-              reset-ed-fn 
+              reset-ed-fn
               (fn []
                 (cond
                   (string? @value) (.setText ed @value)
@@ -109,11 +108,9 @@
          f
          [:div.formic-quill-editor-wrapper
           [:div.formic-quill-editor-root {:ref (fn [el] (reset! element el))}]
-          [:input {:type "hidden" :value (prn-str (DEFAULT_SERIALIZER @value))}]]]
-       )})))
+          [:input {:type "hidden" :value (prn-str (DEFAULT_SERIALIZER @value))}]]])})))
 
-(field/register-component
- :formic-quill
+(def field
  {:component quill
   :parser (fn [v] {:delta (clj->js {:ops v})})
   :serializer DEFAULT_SERIALIZER})
